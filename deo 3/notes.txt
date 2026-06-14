@@ -1,1 +1,20 @@
 output iz .m programa: 
+
+                                                                                                                         
+Izabrani parametri regulatora:
+Kp = 40.000000
+Ki = 1.000000
+
+Konačna vrednost koncentracije (t->inf): 0.025011 mmol/L
+Najveca vrednost koncentracije lamotrigina je: 2.619952e-02
+Preskok je: 4.80%
+octave:33>
+
+
+Kp = 40 je izabrano jer rezultujući preskok od ~5% ne iznosi sistem van terapijskog opsega. 
+Referentna vrednost je 0.025 mmol/L, gornja granica je 0.03 mmol/L, što daje dozvoljeni preskok od maksimalno 20%.
+Izabrano rešenje sa ~5% preskoka zadovoljava ovaj uslov sa dovoljnom rezervom.
+
+Poremećaj amplitude 0.005 mmol/L uveden u trenutku t = 200s efikasno je uklonjen,
+što potvrđuje robusnost projektovanog regulatora — sistem brzo odbacuje poremećaj i vraća koncentraciju 
+na referentnu vrednost bez značajnog odstupanja od terapijskog opsega.

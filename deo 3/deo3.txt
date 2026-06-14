@@ -1,0 +1,122 @@
+Projektovanje regulatora
+U prethodnom delu projekta formiran je i lineariziran matematički model farmakokinetike lamotrigina, na osnovu kog je definisana funkcija prenosa objekta upravljanja (organizma pacijenta):
+G(s) = 0.0125 / [(s + 1)(s + 0.025)]
+Biosenzor koji vrši merenje koncentracije leka u krvi modelovan je jediničnom funkcijom prenosa H(s) = 1, jer se pretpostavlja idealno, trenutno i tačno merenje koncentracije lamotrigina u plazmi.
+Cilj ovog dela projekta je da se na osnovu dobijenog modela izabere odgovarajuća struktura regulatora i odrede njegovi parametri, tako da zatvoreni sistem održava koncentraciju leka unutar terapijskog opsega (0.02 – 0.03 mmol/L), uz zadovoljavajuću brzinu odziva, stabilnost i odsustvo (ili minimalnu vrednost) statičke greške, kao i robusnost na poremećaje koji potiču od fizioloških faktora pacijenta.
+Definisanje referentne vrednosti i poremećaja
+Referentna vrednost predstavlja srednju vrednost terapijskog opsega koncentracije lamotrigina:
+Cp* = (Cp,min + Cp,max) / 2 = (0.02 + 0.03) / 2 = 0.025 mmol/L  ⇒  r(t) = 0.025
+Pored praćenja referentne vrednosti, sistem mora biti otporan i na poremećaje koji nastaju usled fizioloških faktora nezavisnih od rada same pumpe (implantata). Glavni izvori poremećaja su:
+•	metabolizam i eliminacija leka,
+•	interakcija sa hranom ili drugim lekovima,
+•	slučajni unosi leka van pumpe (npr. greška ili dodatna terapija).
+Poremećaj se modeluje kao step funkcija sa kašnjenjem, koja se javlja u trenutku t = 200 s (nakon što je sistem dostigao ustaljeno stanje), sa amplitudom d0 = 0.005 mmol/L:
+d(t) = 0.005 · h(t − 200)        D(s) = (0.005 / s) · e^(−200s)
+Poremećaj se modeluje kao aditivni signal koji se sabira na izlazu objekta upravljanja, odnosno utiče direktno na koncentraciju leka u krvi, simulirajući trenutnu promenu apsorpcije ili eliminacije leka u organizmu pacijenta.
+P – regulator
+Prvi korak u projektovanju regulatora je analiza najjednostavnije strukture – proporcionalnog (P) regulatora, čija je funkcija prenosa:
+Greg(s) = Kp
+Funkcija prenosa otvorenog kola sa P-regulatorom glasi:
+Wp(s) = Gp(s) · Greg(s) = Kp · 0.0125 / [(s + 1)(s + 0.025)]
+1° Analiza stabilnosti
+Karakteristična jednačina zatvorenog sistema sa P-regulatorom je:
+f(s) = s² + 1.025s + (0.025 + 0.0125·Kp)
+Primenom Routh–Hurwitz kriterijuma na karakterističnu jednačinu drugog reda formira se sledeća šema:
+s	kolona 1	kolona 2
+s²	1	0.025 + 0.0125·Kp
+s¹	1.025	0
+s⁰	0.025 + 0.0125·Kp	
+
+Da bi sistem bio stabilan, svi elementi prve kolone moraju biti pozitivni, što daje uslov:
+0.025 + 0.0125·Kp > 0   ⇒   Kp > −2
+Pošto je u realnoj primeni pojačanje regulatora Kp uvek pozitivno, ovaj uslov je trivijalno zadovoljen za sve fizički ostvarive vrednosti Kp. Sistem je, dakle, stabilan za svako Kp > 0.
+2° Analiza statičke greške
+Ukupna statička greška sastoji se iz greške usled praćenja referentne vrednosti (essr) i greške usled poremećaja (essd):
+ess = essr + essd
+Greška praćenja reference, za step ulaz r(t) = 0.025, dobija se primenom teoreme o konačnoj vrednosti:
+E(s)/R(s) = (s + 1)(s + 0.025) / [(s + 1)(s + 0.025) + 0.0125·Kp]
+essr = lim(s→0) s·E(s) = 0.025² / (0.025 + 0.0125·Kp) = const
+Vidi se da essr ima konačnu, nenultu vrednost koja zavisi od izabranog Kp i koja se ne može svesti na nulu povećanjem pojačanja, već se može samo smanjiti.
+Slično, greška usled poremećaja D(s) takođe dobija konstantnu, nenultu vrednost:
+essd(t) = const ≠ 0,    essd(t) ≠ essr(t)
+Pošto je ukupna greška:
+ess = essr + essd = const ≠ 0
+zaključuje se da P regulator ne uklanja grešku u ustaljenom stanju. Sistem bi, dakle, u stacionarnom stanju imao koncentraciju leka koja trajno odstupa od referentne vrednosti 0.025 mmol/L, što nije prihvatljivo za terapiju kod koje je neophodno precizno održavanje koncentracije unutar uskog terapijskog opsega. Iz ovog razloga, P regulator se odbacuje kao neadekvatno rešenje.
+PI – regulator
+Kako bi se eliminisala statička greška, uvodi se integralna komponenta regulatora. Funkcija prenosa PI regulatora glasi:
+u(t) = Kp·e(t) + Ki·∫e(τ)dτ   ⇒   Greg(s) = Kp + Ki/s = (Kp·s + Ki) / s
+1° Analiza stabilnosti
+Funkcija prenosa otvorenog kola sa PI regulatorom je:
+W0(s) = Gp(s) · Greg(s) = 0.0125·(Kp·s + Ki) / [s(s + 1)(s + 0.025)]
+Karakteristična jednačina zatvorenog sistema (trećeg reda) glasi:
+f(s) = s³ + 1.025s² + (0.025 + 0.0125·Kp)·s + 0.0125·Ki
+Primenom Routh–Hurwitz kriterijuma formira se šema:
+s	kolona 1	kolona 2
+s³	1	0.025 + 0.0125·Kp
+s²	1.025	0.0125·Ki
+s¹	0.025 + 0.0125·Kp − 0.0122·Ki	0
+s⁰	0.0125·Ki	
+
+Iz prve kolone se dobijaju uslovi stabilnosti:
+•	iz reda s⁰:  Ki > 0,
+•	iz reda s¹:  0.0125·Kp > 0.0122·Ki − 0.025,  odnosno  Kp > 0.9756·Ki − 2.
+Pošto su Kp i Ki u praksi pozitivni, drugi uslov je za male i umerene vrednosti Ki praktično uvek zadovoljen (npr. za Ki < 2 dobija se Kp > -0.05), tako da je sistem sa PI regulatorom stabilan za širok opseg fizički realnih vrednosti parametara.
+2° Analiza statičke greške
+Greška praćenja reference za step ulaz:
+essr = lim(s→0) s · 1/(1 + Greg(s)G(s)) · (r0/s) = 0
+Greška usled poremećaja D(s), primenjenog na izlazu objekta:
+essd(t) = lim(s→0) s · (−G(s))/(1 + Greg(s)G(s)) · (d0/s)·e^(−200s) = 0
+Dakle:
+ess = essr + essd = 0  ⇒  PI regulator eliminiše statičku grešku!
+Ovim je potvrđeno da PI regulator zadovoljava zahtev za nultom statičkom greškom kako u praćenju referentne vrednosti, tako i u kompenzaciji poremećaja, što je ključno za precizno doziranje leka u dugotrajnom vremenskom intervalu.
+Razmatranje PID regulatora
+Iako bi dodavanje diferencijalne (D) komponente moglo dodatno ubrzati odziv sistema, ovakvo rešenje bi pojačalo osetljivost regulatora na šum sa senzora. U medicinskim sistemima, gde se signal sa biosenzora po prirodi može smatrati nestabilnim i šumovitim, ovo predstavlja značajan rizik – diferenciranje šuma bi dovelo do prevelikih, naglih i nepouzdanih promena upravljačkog signala (doze leka). Iz ovog razloga, PID regulator je odbačen, a kao konačno rešenje usvaja se PI regulator.
+Određivanje parametara PI regulatora
+Objekat upravljanja ima jedan brz pol u s = −1 i jedan veoma spor pol u s = −0.025. Spori pol je dominantan i bitno usporava odziv sistema. Strategija projektovanja zasniva se na postavljanju nule regulatora (odnos Ki/Kp) tačno na poziciju sporog pola objekta, kako bi se taj pol skratio (poništio) sa nulom regulatora:
+Ki / Kp = 0.025   ⇒   Greg(s) = Kp · (s + 0.025) / s
+Nakon skraćivanja, povratni prenos otvorenog kola postaje:
+G0(s) = Kp · 0.0125 / [s(s + 1)]
+gde se uočava da je jedan pol u koordinatnom početku (s = 0, integralno dejstvo regulatora), a drugi u s = −1 (preostali, brži pol pacijenta).
+Geometrijsko mesto korena (GMK)
+Za sistem G0(s) = Kp·0.0125 / [s(s+1)] geometrijsko mesto korena je crtano u Octave-u (komanda rlocus). Za male vrednosti Kp polovi su realni: jedan kreće iz s = 0 ka levo, drugi iz s = −1 ka desno. Polovi se susreću na realnoj osi u tački grananja s = −0.5, nakon čega postaju kompleksno-konjugovani i kreću se vertikalno.
+ 
+Slika 1. Geometrijsko mesto korena sistema sa PI regulatorom (G0(s) = 0.0125·Kp / [s(s+1)])
+U tački grananja s = −0.5 sistem se ponaša kao kritično prigušen sistem drugog reda, sa parametrima:
+Kp = 20,   ζ = 1,   ωn = 0.5,   Ki = 0.025 · 20 = 0.5
+Odziv u ovoj radnoj tački raste maksimalno brzo bez ikakvog preskoka (kritično prigušenje), što je veoma bezbedno, ali pomalo “sporo” u smislu da se ne iskorišćava puni potencijal sistema.
+Sistem drugog reda i izbor pojačanja Kp
+Pošto se nakon skraćivanja pola sistem svodi na standardan oblik sistema drugog reda:
+G(s) = K · ωn² / (s² + 2ζωn·s + ωn²) = 0.0125·Kp / [s(s + 1) + 0.0125·Kp]
+karakteristična jednačina zatvorenog kola je:
+f(s) = s² + s + 0.0125·Kp = s² + 2ζωn·s + ωn²
+odakle se dobijaju veze između parametara regulatora i parametara sistema drugog reda:
+2ζωn = 1        ωn² = 0.0125·Kp
+Birana je vrednost Kp = 40, čime se dobija pojačanje koje pomera sistem iznad tačke grananja, ali ne previše, kako bi se obezbedio brz odziv uz prihvatljiv (mali) preskok. Za Kp = 40:
+ωn² = 0.0125 · 40 = 0.5   ⇒   ωn ≈ 0.707 rad/s
+ζ = 1 / (2ωn) ≈ 0.707
+Faktor prigušenja ζ ≈ 0.707 predstavlja tipično dobro prigušenje – sistem je dovoljno brz, dok je preskok ograničen na svega nekoliko procenata, čime se konstantno održava koncentracija leka u terapijskom opsegu i nakon eventualnog blagog premašaja referentne vrednosti.
+Na osnovu izabranog Kp, integralno pojačanje regulatora se dobija iz uslova skraćivanja pola:
+Ki = Kp · 0.025 = 40 · 0.025 = 1
+Konačni parametri PI regulatora:
+Kp = 40        Ki = 1        Greg(s) = 40 + 1/s
+Simulacija sistema
+Simulacija je sprovedena u programskom paketu Octave, korišćenjem paketa control. Implementirani su sledeći koraci:
+•	definisanje funkcije prenosa objekta G(s) i biosenzora H(s) = 1;
+•	definisanje funkcije prenosa PI regulatora bez pojačanja, G_reg(s) = (s + 0.025)/s, i crtanje GMK radi izbora Kp;
+•	formiranje konačne funkcije prenosa regulatora sa izabranim Kp = 40 i Ki = 0.025·Kp;
+•	formiranje funkcije prenosa zatvorenog sistema od referencе do izlaza, Ws(s) = feedback(Greg·G, H), i od poremećaja do izlaza, Wd(s) = feedback(G, Greg·H);
+•	simulacija odziva na referentni step signal r0 = 0.025 u trajanju od 300 s;
+•	simulacija odziva na poremećaj amplitude d0 = 0.005, koji nastupa u trenutku t = 200 s, uz odgovarajuće vremensko kašnjenje primenjeno na odziv sistema na poremećaj;
+•	sabiranje odziva na referencu i poremećaj, te prikaz ukupnog odziva zajedno sa granicama terapijskog opsega (0.02 i 0.03 mmol/L) i referentnom vrednošću (0.025 mmol/L).
+Dobijeni odziv sistema prikazan je na slici 2.
+ 
+Slika 2. Odziv zatvorenog sistema sa PI regulatorom (Kp = 40, Ki = 1) na referentni signal i poremećaj u t = 200 s
+Analiza dobijenih rezultata
+Sa grafika se uočava da koncentracija lamotrigina u krvi pacijenta brzo raste iz nulte vrednosti i dostiže ustaljeno stanje u okolini referentne vrednosti 0.025 mmol/L, bez izlaska iz granica terapijskog opsega (0.02 – 0.03 mmol/L) tokom prelaznog procesa. Preskok odziva je mali, u skladu sa očekivanim faktorom prigušenja ζ ≈ 0.707, i koncentracija ostaje unutar bezbednih granica.
+U trenutku t = 200 s unosi se poremećaj amplitude d0 = 0.005 mmol/L, koji simulira nagli porast koncentracije leka usled spoljašnjeg faktora (npr. promenjena apsorpcija ili interakcija sa drugim lekom). Sistem reaguje blagim, kratkotrajnim porastom koncentracije, nakon čega se regulator, zahvaljujući integralnom dejstvu, ponovo vraća koncentraciju na referentnu vrednost 0.025 mmol/L, eliminišući uticaj poremećaja u ustaljenom stanju.
+Numerička provera u Octave-u pokazuje da je konačna vrednost koncentracije jednaka referentnoj vrednosti 0.025 mmol/L (statička greška jednaka nuli), dok je maksimalna vrednost preskoka tokom prelaznog procesa znatno manja od gornje granice terapijskog opsega 0.03 mmol/L, što potvrđuje bezbednost i preciznost projektovanog sistema regulacije.
+Zaključak
+Analiza P regulatora je pokazala da, iako je sistem stabilan za sve pozitivne vrednosti Kp, ovakav regulator ne može eliminisati statičku grešku, što dovodi do trajnog odstupanja koncentracije leka od željene vrednosti i smanjuje preciznost terapije.
+Uvođenjem PI regulatora, čija je nula postavljena tačno na poziciju sporog pola objekta (s = −0.025), postignuto je značajno ubrzanje odziva sistema uz potpunu eliminaciju statičke greške, kako u praćenju referentne vrednosti, tako i u kompenzaciji poremećaja.
+Na osnovu analize geometrijskog mesta korena, izabrane su vrednosti Kp = 40 i Ki = 1, kojima se dobija faktor prigušenja ζ ≈ 0.707 i prirodna frekvencija ωn ≈ 0.707 rad/s – sistem koji je brz, sa malim preskokom, i koji koncentraciju lamotrigina održava unutar terapijskog opsega tokom celog vremena simulacije, uključujući i period nakon nastupanja poremećaja u t = 200 s.
+Razmatranje PID regulatora je odbačeno zbog osetljivosti diferencijalne komponente na šum sa biosenzora, što bi u medicinskoj primeni predstavljalo bezbednosni rizik. PI regulator sa parametrima Kp = 40 i Ki = 1 predstavlja, dakle, finalno usvojeno rešenje koje zadovoljava zahteve automatske regulacije, preciznosti, pouzdanosti i bezbednosti terapije lamotriginom definisane u postavci projekta.
